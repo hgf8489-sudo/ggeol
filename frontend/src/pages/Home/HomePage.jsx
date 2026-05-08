@@ -1,66 +1,111 @@
 import { useNavigate } from 'react-router-dom';
 import SearchBar from '../../components/SearchBar/SearchBar.jsx';
-import PeriodSelector from '../../components/PeriodSelector/PeriodSelector.jsx';
 import { useAnalysisStore } from '../../store/useAnalysisStore.js';
-import { useAnalysis } from '../../hooks/useAnalysis.js';
+import { useMultiAnalysis } from '../../hooks/useAnalysis.js';
+
+const EXAMPLE_TICKERS = [
+  { label: '삼성전자', sub: '005930 · KRX' },
+  { label: 'NVIDIA',   sub: 'NVDA · NASDAQ' },
+  { label: 'Bitcoin',  sub: 'BTC · Crypto' },
+  { label: 'Tesla',    sub: 'TSLA · NASDAQ' },
+];
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { selectedTicker, selectedPeriod, setTicker, setPeriod, loading } = useAnalysisStore();
-  const { run } = useAnalysis();
+  const { selectedTicker, setTicker, loading } = useAnalysisStore();
+  const { runAll } = useMultiAnalysis();
 
   async function handleSimulate() {
     if (!selectedTicker) return;
-    await run(selectedTicker, selectedPeriod);
+    await runAll(selectedTicker);
     navigate('/result');
   }
 
   return (
-    <div className="flex flex-col items-center gap-12 pt-8 animate-fade-in">
+    <div className="flex flex-col items-center gap-14 pt-6 animate-fade-in">
+
       {/* Hero */}
-      <div className="text-center space-y-3">
-        <h1 className="text-6xl font-black tracking-tight">
-          <span className="text-white">이때 </span>
-          <span className="text-accent-gold">샀다면</span>
-          <span className="text-white">...</span>
+      <div className="text-center space-y-5">
+        <div className="inline-flex items-center gap-2 bg-up/10 border border-up/20 rounded-full px-4 py-1.5 text-up text-xs font-semibold mb-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-up animate-pulse inline-block" />
+          주식 · 코인 최대 수익 시뮬레이터
+        </div>
+
+        <h1 className="text-5xl sm:text-6xl font-black tracking-tight leading-[1.1]">
+          종목을 검색하고<br />
+          <span className="text-up">껄껄껄</span>{' '}
+          <span className="text-white/80">웃어보세요</span>
         </h1>
-        <p className="text-white/40 text-lg max-w-md mx-auto leading-relaxed">
-          후회는 늦었지만, 확인은 지금 할 수 있습니다.
-          <br />주식·코인의 이론상 최대 수익을 계산해 드립니다.
+
+        <p className="text-white/40 text-base max-w-sm mx-auto leading-relaxed">
+          이때 샀을 걸... 이때 팔았을 걸...<br />
+          선택한 기간의 <strong className="text-white/60">이론상 최대 수익</strong>을 알려드립니다.
         </p>
       </div>
 
-      {/* Search + Config */}
-      <div className="w-full max-w-2xl space-y-6">
+      {/* Search */}
+      <div className="w-full max-w-xl space-y-4">
         <SearchBar onSelect={setTicker} />
 
-        {selectedTicker && (
-          <div className="card animate-slide-up space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-accent-green animate-pulse" />
-              <span className="font-semibold text-white">{selectedTicker.name}</span>
-              <span className="text-white/40 text-sm font-mono">{selectedTicker.ticker}</span>
-            </div>
-            <div>
-              <p className="text-white/40 text-xs mb-3 uppercase tracking-wider">기간 선택</p>
-              <PeriodSelector selected={selectedPeriod} onChange={setPeriod} />
-            </div>
-          </div>
+        {selectedTicker ? (
+          <SelectedTicker ticker={selectedTicker} onClear={() => setTicker(null)} />
+        ) : (
+          <ExampleChips />
         )}
 
         <button
           onClick={handleSimulate}
           disabled={!selectedTicker || loading}
-          className="w-full btn-primary py-4 text-lg disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full btn-primary py-4 text-base font-black tracking-wide
+                     disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none"
         >
-          {loading ? '분석 중...' : '껄껄껄 시뮬레이션 시작 →'}
+          {loading
+            ? <span className="flex items-center justify-center gap-2"><Spinner />후회 계산 중...</span>
+            : '👉 지금 확인하기'}
         </button>
       </div>
 
-      {/* Hint */}
-      <p className="text-white/20 text-sm font-mono">
-        "그때 1000만원만 넣었으면..." — 모든 투자자의 마음
+      {/* Bottom tagline */}
+      <p className="text-white/15 text-sm font-mono text-center">
+        "그때 딱 한 번만 샀어도..." — 모든 투자자의 마음
       </p>
     </div>
   );
+}
+
+function SelectedTicker({ ticker, onClear }) {
+  return (
+    <div className="flex items-center justify-between bg-surface-card border border-surface-border rounded-xl px-5 py-3.5 animate-pop">
+      <div className="flex items-center gap-3">
+        <div className="w-2 h-2 rounded-full bg-up animate-pulse" />
+        <span className="font-bold text-white">{ticker.name}</span>
+        <span className="text-white/30 text-sm font-mono">{ticker.ticker}</span>
+        <span className={ticker.type === 'crypto' ? 'tag-crypto' : 'tag-stock'}>
+          {ticker.type === 'crypto' ? '코인' : '주식'}
+        </span>
+      </div>
+      <button onClick={onClear} className="text-white/30 hover:text-white/70 transition-colors text-lg leading-none">×</button>
+    </div>
+  );
+}
+
+function ExampleChips() {
+  return (
+    <div className="flex flex-wrap gap-2 justify-center">
+      <span className="text-white/20 text-xs self-center mr-1">예시:</span>
+      {EXAMPLE_TICKERS.map(({ label, sub }) => (
+        <span
+          key={label}
+          className="text-xs bg-surface-card border border-surface-border rounded-lg px-3 py-1.5
+                     text-white/40 font-mono"
+        >
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function Spinner() {
+  return <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />;
 }

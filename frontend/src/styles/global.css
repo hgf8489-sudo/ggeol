@@ -3,51 +3,57 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    @apply scroll-smooth;
-  }
+  html { @apply scroll-smooth; }
 
-  body {
-    @apply bg-surface text-white font-sans;
-  }
+  body { @apply bg-surface text-white font-sans; }
 
-  ::selection {
-    @apply bg-accent-blue/30 text-white;
-  }
+  ::selection { @apply bg-down/30 text-white; }
 
-  ::-webkit-scrollbar {
-    @apply w-1.5;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-surface;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-white/20 rounded-full;
-  }
+  ::-webkit-scrollbar       { @apply w-1; }
+  ::-webkit-scrollbar-track { @apply bg-surface; }
+  ::-webkit-scrollbar-thumb { @apply bg-white/10 rounded-full hover:bg-white/20; }
 }
 
 @layer components {
   .card {
-    @apply bg-surface-card rounded-2xl border border-white/5 p-6;
+    @apply bg-surface-card rounded-2xl border border-surface-border p-6;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-200 hover:border-white/15 hover:bg-surface-hover cursor-pointer;
   }
 
   .btn-primary {
-    @apply bg-accent-green text-black font-semibold px-6 py-2.5 rounded-xl
-           hover:bg-accent-green/90 active:scale-95 transition-all duration-150;
+    @apply bg-up text-white font-bold px-6 py-3 rounded-xl
+           hover:bg-up/85 active:scale-[0.97]
+           transition-all duration-150 shadow-lg shadow-up/20;
   }
 
   .btn-ghost {
-    @apply bg-white/5 text-white font-medium px-5 py-2 rounded-xl
-           hover:bg-white/10 active:scale-95 transition-all duration-150;
+    @apply bg-white/5 text-white/70 font-medium px-5 py-2 rounded-xl border border-white/5
+           hover:bg-white/10 hover:text-white active:scale-[0.97] transition-all duration-150;
   }
 
-  .text-profit {
-    @apply text-accent-green font-bold;
-  }
+  .tag-stock  { @apply text-xs px-2.5 py-0.5 rounded-full font-semibold bg-down/15 text-down; }
+  .tag-crypto { @apply text-xs px-2.5 py-0.5 rounded-full font-semibold bg-accent-gold/15 text-accent-gold; }
 
-  .text-loss {
-    @apply text-accent-red font-bold;
+  .value-up   { @apply text-up font-bold tabular-nums; }
+  .value-down { @apply text-down font-bold tabular-nums; }
+
+  /* Glowing divider */
+  .glow-line {
+    @apply h-px w-full;
+    background: linear-gradient(90deg, transparent, rgba(255,58,58,0.4), transparent);
   }
 }
+
+/* Ticker tape scrolling bar */
+.ticker-wrap {
+  overflow: hidden;
+  white-space: nowrap;
+}
+.ticker-inner {
+  display: inline-flex;
+  animation: ticker 24s linear infinite;
+}
+.ticker-inner:hover { animation-play-state: paused; }
