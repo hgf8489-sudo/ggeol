@@ -1,9 +1,13 @@
 import axios from 'axios';
 import { periodToDays } from '../utils/dateUtils.js';
+import { generateMockHistory } from '../utils/mockData.js';
 
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
+const USE_MOCK = process.env.USE_MOCK === 'true';
 
 export async function fetchCryptoHistory(coinId, period) {
+  if (USE_MOCK) return generateMockHistory(coinId, period);
+
   const days = periodToDays(period);
   const headers = {};
   if (process.env.COINGECKO_API_KEY) {
@@ -17,11 +21,11 @@ export async function fetchCryptoHistory(coinId, period) {
   });
 
   return data.prices.map(([timestamp, price]) => ({
-    date: new Date(timestamp).toISOString().split('T')[0],
-    close: price,
-    open: price,
-    high: price,
-    low: price,
+    date:   new Date(timestamp).toISOString().split('T')[0],
+    close:  price,
+    open:   price,
+    high:   price,
+    low:    price,
     volume: 0,
   }));
 }

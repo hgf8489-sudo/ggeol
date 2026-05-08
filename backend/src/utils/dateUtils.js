@@ -14,3 +14,8 @@ export function periodToDateRange(period) {
 export function periodToDays(period) {
   return { '1w': 7, '1m': 30, '3m': 90, '6m': 180, '1y': 365 }[period] ?? 30;
 }
+
+// Yahoo Finance v8 chart range param
+export function periodToRange(period) {
+  return { '1w': '5d', '1m': '1mo', '3m': '3mo', '6m': '6mo', '1y': '1y' }[period] ?? '1mo';
+}

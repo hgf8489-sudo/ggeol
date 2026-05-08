@@ -2,6 +2,7 @@
   "name": "ggeol-backend",
   "version": "1.0.0",
   "description": "껄껄껄 - Investment regret simulator backend",
+  "type": "module",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
