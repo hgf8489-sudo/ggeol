@@ -1,35 +1,70 @@
 import { fetchStockHistory } from './stockService.js';
 import { fetchCryptoHistory } from './cryptoService.js';
-import { findOptimalPoints } from '../utils/optimizer.js';
+import { findMaxProfit } from '../utils/optimizer.js';
+import { buildRegretMessage, getComparisons } from '../utils/comparisons.js';
+import { analysisCache } from '../utils/cache.js';
 
-export async function analyzePeriod(ticker, period, type) {
+// Default investment amount (KRW) used when caller doesn't specify
+const DEFAULT_AMOUNT_KRW = 1_000_000;
+
+/**
+ * @param {string} ticker
+ * @param {string} period   1w | 1m | 3m | 6m | 1y
+ * @param {string} type     stock | crypto
+ * @param {number} amountKrw  investment amount in KRW
+ */
+export async function analyzePeriod(ticker, period, type, amountKrw = DEFAULT_AMOUNT_KRW) {
+  const cacheKey = `${type}:${ticker}:${period}`;
+  const cached = analysisCache.get(cacheKey);
+  if (cached) {
+    // Re-compute amount-dependent fields (comparisons change per request)
+    return withAmountFields(cached, amountKrw);
+  }
+
   const priceHistory = type === 'crypto'
     ? await fetchCryptoHistory(ticker, period)
     : await fetchStockHistory(ticker, period);
 
   if (!priceHistory || priceHistory.length < 2) {
-    throw Object.assign(new Error('데이터가 부족합니다.'), { status: 404 });
+    const err = new Error('데이터가 부족합니다.');
+    err.status = 404;
+    throw err;
   }
 
-  const { buyPoint, sellPoint, maxProfit, maxProfitPct } = findOptimalPoints(priceHistory);
+  const result = findMaxProfit(priceHistory);
+  if (!result) {
+    const err = new Error('수익 구간을 계산할 수 없습니다.');
+    err.status = 422;
+    throw err;
+  }
 
-  return {
+  const base = {
     ticker,
     period,
     type,
     priceHistory,
-    buyPoint,
-    sellPoint,
-    maxProfit,
-    maxProfitPct,
-    summary: buildSummary(maxProfitPct),
+    buyPoint: result.buyPoint,
+    sellPoint: result.sellPoint,
+    profitPct: result.profitPct,
+    profitPerUnit: result.profitPerUnit,
+    isProfitable: result.isProfitable,
   };
+
+  // Cache the price-history part (amount-independent)
+  analysisCache.set(cacheKey, base);
+
+  return withAmountFields(base, amountKrw);
 }
 
-function buildSummary(pct) {
-  if (pct >= 100) return `그때 샀다면 두 배 넘게 먹었을 텐데... 껄껄껄 😭`;
-  if (pct >= 50) return `${pct.toFixed(1)}% 수익. 인생이 바뀔 수도 있었는데. 껄껄껄`;
-  if (pct >= 20) return `${pct.toFixed(1)}% 수익 기회를 날렸습니다. 껄껄`;
-  if (pct >= 5) return `${pct.toFixed(1)}% 소소한 기회... 그래도 했어야 했어. 껄`;
-  return `${pct.toFixed(1)}% 수익. 뭐, 이 정도면 괜찮... 아니 아쉽다.`;
+function withAmountFields(base, amountKrw) {
+  const units = amountKrw / base.buyPoint.close;   // how many units you could've bought
+  const profitKrw = Math.round(units * base.profitPerUnit);
+
+  return {
+    ...base,
+    investAmount: amountKrw,
+    profitKrw,
+    comparisons: getComparisons(profitKrw, 2),
+    regretMessage: buildRegretMessage(profitKrw, base.profitPct),
+  };
 }

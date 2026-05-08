@@ -6,6 +6,7 @@ import { rateLimit } from 'express-rate-limit';
 import searchRouter from './routes/search.js';
 import analysisRouter from './routes/analysis.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { analysisCache, searchCache } from './utils/cache.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -28,7 +29,17 @@ app.use('/api', limiter);
 app.use('/api/search', searchRouter);
 app.use('/api/analysis', analysisRouter);
 
-app.get('/health', (_, res) => res.json({ status: 'ok', service: 'ggeol-backend' }));
+app.get('/health', (_, res) => res.json({
+  status: 'ok',
+  service: 'ggeol-backend',
+  cache: { analysis: analysisCache.size, search: searchCache.size },
+}));
+
+// Purge expired cache entries every 10 minutes
+setInterval(() => {
+  analysisCache.purgeExpired();
+  searchCache.purgeExpired();
+}, 10 * 60 * 1000);
 
 app.use(errorHandler);
 
