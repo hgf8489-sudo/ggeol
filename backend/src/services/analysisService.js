@@ -57,7 +57,14 @@ export async function analyzePeriod(ticker, period, type, amountKrw = DEFAULT_AM
 }
 
 function withAmountFields(base, amountKrw) {
-  const units = amountKrw / base.buyPoint.close;   // how many units you could've bought
+  // Upbit crypto prices are already in KRW.
+  // Stock prices are in the listed currency (USD/KRW depending on exchange).
+  // profitPerUnit is in the same unit as close price, so:
+  //   crypto (KRW) → profitKrw = units * profitPerUnit  (direct)
+  //   stock (USD)  → profitKrw = units * profitPerUnit * KRW_PER_USD (approx)
+  // For simplicity we treat all as KRW for now; USD stocks show USD profit
+  // labelled as "수익" without currency conversion.
+  const units = amountKrw / base.buyPoint.close;
   const profitKrw = Math.round(units * base.profitPerUnit);
 
   return {
