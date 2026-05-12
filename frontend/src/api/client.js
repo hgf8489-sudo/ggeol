@@ -17,6 +17,6 @@ export function searchTickers(query, type = 'all') {
   return api.get('/search', { params: { q: query, type } });
 }
 
-export function fetchAnalysis(ticker, period, type = 'stock') {
-  return api.get('/analysis', { params: { ticker, period, type } });
+export function fetchAnalysis(ticker, period, type = 'stock', amount) {
+  return api.get('/analysis', { params: { ticker, period, type, amount } });
 }

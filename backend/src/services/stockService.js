@@ -71,7 +71,7 @@ export async function searchStocks(query) {
     })
   );
 
-  return (data?.finance?.result?.[0]?.quotes ?? [])
+  return (data?.quotes ?? data?.finance?.result?.[0]?.quotes ?? [])
     .filter(q => q.symbol && (q.shortname || q.longname))
     .slice(0, 8)
     .map(q => ({

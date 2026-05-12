@@ -45,9 +45,9 @@ export default function ResultCard({ data, rank }) {
           <p className={`text-5xl font-black tabular-nums tracking-tight ${isUp ? 'text-up' : 'text-down'}`}>
             {isUp ? '+' : ''}{profitPct.toFixed(2)}%
           </p>
-          {profitKrw != null && (
+          {profitKrw != null && data.investAmount != null && (
             <p className="text-white/40 text-sm mt-1 font-mono">
-              100만원 투자 시 <span className={isUp ? 'text-up' : 'text-down'}>+{formatKrw(profitKrw)}</span> 수익
+              {formatKrw(data.investAmount)} 투자 시 <span className={isUp ? 'text-up' : 'text-down'}>+{formatKrw(profitKrw)}</span> 수익
             </p>
           )}
         </div>

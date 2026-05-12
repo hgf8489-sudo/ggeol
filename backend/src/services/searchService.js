@@ -1,5 +1,6 @@
 import { searchStocks } from './stockService.js';
 import { searchUpbitMarkets } from './upbitService.js';
+import { searchNaverStocks, hasKorean } from './naverService.js';
 import { MOCK_SEARCH_RESULTS } from '../utils/mockData.js';
 
 const USE_MOCK = process.env.USE_MOCK === 'true';
@@ -14,13 +15,18 @@ export async function searchTickers(query, type) {
   }
 
   const results = [];
+  const isKorean = hasKorean(query);
 
   if (type === 'all' || type === 'stock') {
-    results.push(...await safe(() => searchStocks(query)));
+    if (isKorean) {
+      // 한글 쿼리는 네이버 금융으로 검색
+      results.push(...await safe(() => searchNaverStocks(query)));
+    } else {
+      results.push(...await safe(() => searchStocks(query)));
+    }
   }
 
   if (type === 'all' || type === 'crypto') {
-    // Upbit: Korean exchange, KRW-denominated
     results.push(...await safe(() => searchUpbitMarkets(query)));
   }
 

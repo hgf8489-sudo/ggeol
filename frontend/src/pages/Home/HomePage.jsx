@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchBar from '../../components/SearchBar/SearchBar.jsx';
 import { useAnalysisStore } from '../../store/useAnalysisStore.js';
@@ -10,15 +11,36 @@ const EXAMPLE_TICKERS = [
   { label: 'Tesla',    sub: 'TSLA · NASDAQ' },
 ];
 
+const PRESETS = [
+  { label: '10만원',  value: 100_000 },
+  { label: '100만원', value: 1_000_000 },
+  { label: '500만원', value: 5_000_000 },
+  { label: '1천만원', value: 10_000_000 },
+];
+
 export default function HomePage() {
   const navigate = useNavigate();
-  const { selectedTicker, setTicker, loading } = useAnalysisStore();
+  const { selectedTicker, setTicker, loading, amount, setAmount } = useAnalysisStore();
   const { runAll } = useMultiAnalysis();
+  const [inputVal, setInputVal] = useState('1,000,000');
 
   async function handleSimulate() {
     if (!selectedTicker) return;
     await runAll(selectedTicker);
     navigate('/result');
+  }
+
+  function handleAmountChange(e) {
+    const raw = e.target.value.replace(/[^0-9]/g, '');
+    if (!raw) { setInputVal(''); setAmount(0); return; }
+    const num = Math.min(parseInt(raw, 10), 10_000_000_000);
+    setInputVal(num.toLocaleString('ko-KR'));
+    setAmount(num);
+  }
+
+  function handlePreset(value) {
+    setInputVal(value.toLocaleString('ko-KR'));
+    setAmount(value);
   }
 
   return (
@@ -43,7 +65,7 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* Search */}
+      {/* Search + Amount */}
       <div className="w-full max-w-xl space-y-4">
         <SearchBar onSelect={setTicker} />
 
@@ -52,6 +74,42 @@ export default function HomePage() {
         ) : (
           <ExampleChips />
         )}
+
+        {/* 투자금 설정 */}
+        <div className="bg-surface-card border border-surface-border rounded-xl px-5 py-4 space-y-3">
+          <p className="text-white/40 text-xs font-semibold tracking-wide">💰 투자금 설정</p>
+
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={inputVal}
+                onChange={handleAmountChange}
+                className="w-full bg-surface border border-white/10 rounded-lg px-4 py-2.5
+                           text-white font-mono text-right text-lg focus:outline-none
+                           focus:border-white/30 transition-colors"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 text-sm pointer-events-none">원</span>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            {PRESETS.map(({ label, value }) => (
+              <button
+                key={value}
+                onClick={() => handlePreset(value)}
+                className={`flex-1 text-xs py-1.5 rounded-lg border transition-colors font-semibold
+                  ${amount === value
+                    ? 'bg-up/20 border-up/40 text-up'
+                    : 'bg-surface border-white/10 text-white/40 hover:text-white/70 hover:border-white/20'
+                  }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <button
           onClick={handleSimulate}
@@ -93,7 +151,7 @@ function ExampleChips() {
   return (
     <div className="flex flex-wrap gap-2 justify-center">
       <span className="text-white/20 text-xs self-center mr-1">예시:</span>
-      {EXAMPLE_TICKERS.map(({ label, sub }) => (
+      {EXAMPLE_TICKERS.map(({ label }) => (
         <span
           key={label}
           className="text-xs bg-surface-card border border-surface-border rounded-lg px-3 py-1.5

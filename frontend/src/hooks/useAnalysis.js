@@ -5,7 +5,7 @@ import { useAnalysisStore } from '../store/useAnalysisStore.js';
 const MULTI_PERIODS = ['1w', '1m', '1y'];
 
 export function useMultiAnalysis() {
-  const { setLoading, setMultiResults, setError } = useAnalysisStore();
+  const { setLoading, setMultiResults, setError, amount } = useAnalysisStore();
 
   const runAll = useCallback(async (ticker) => {
     if (!ticker) return;
@@ -13,7 +13,7 @@ export function useMultiAnalysis() {
 
     try {
       const settled = await Promise.allSettled(
-        MULTI_PERIODS.map(p => fetchAnalysis(ticker.ticker, p, ticker.type))
+        MULTI_PERIODS.map(p => fetchAnalysis(ticker.ticker, p, ticker.type, amount))
       );
 
       const results = {};
@@ -28,7 +28,7 @@ export function useMultiAnalysis() {
     } catch (err) {
       setError(err.message);
     }
-  }, [setLoading, setMultiResults, setError]);
+  }, [setLoading, setMultiResults, setError, amount]);
 
   return { runAll };
 }

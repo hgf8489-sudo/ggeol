@@ -6,6 +6,7 @@ export default function SearchBar({ onSelect }) {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState(null);
   const debounceRef = useRef(null);
   const wrapperRef = useRef(null);
 
@@ -23,14 +24,20 @@ export default function SearchBar({ onSelect }) {
     const val = e.target.value;
     setQuery(val);
     clearTimeout(debounceRef.current);
-    if (!val.trim()) { setResults([]); setOpen(false); return; }
+    if (!val.trim()) { setResults([]); setOpen(false); setError(null); return; }
 
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
+      setError(null);
       try {
         const data = await searchTickers(val);
         setResults(data);
-        setOpen(true);
+        setOpen(data.length > 0);
+      } catch (err) {
+        console.error('[SearchBar] 검색 실패:', err);
+        setError(err.message);
+        setResults([]);
+        setOpen(false);
       } finally {
         setLoading(false);
       }
@@ -61,6 +68,10 @@ export default function SearchBar({ onSelect }) {
           </div>
         )}
       </div>
+
+      {error && (
+        <p className="mt-2 text-xs text-down px-1">{error}</p>
+      )}
 
       {open && results.length > 0 && (
         <ul className="absolute top-full mt-2 w-full bg-surface-card border border-white/10
